@@ -63,6 +63,10 @@ define(['exports', 'aurelia-dependency-injection', './auth-utilities', './storag
 
       return this.http.fetch(exchangeForTokenUrl, {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: (0, _aureliaFetchClient.json)(data),
         credentials: credentials
       }).then(_authUtilities.status);

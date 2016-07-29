@@ -4,15 +4,17 @@ import { inject } from 'aurelia-dependency-injection';
 import { extend, forEach, isFunction, isString, joinUrl, camelCase, status } from './auth-utilities';
 import { Storage } from './storage';
 import { Popup } from './popup';
+import { Iframe } from './iframe';
 import { BaseConfig } from './base-config';
 import { Authentication } from './authentication';
 import { HttpClient, json } from 'aurelia-fetch-client';
 
-export let OAuth2 = (_dec = inject(Storage, Popup, HttpClient, BaseConfig, Authentication), _dec(_class = class OAuth2 {
-  constructor(storage, popup, http, config, auth) {
+export let OAuth2 = (_dec = inject(Storage, Popup, Iframe, HttpClient, BaseConfig, Authentication), _dec(_class = class OAuth2 {
+  constructor(storage, popup, iframe, http, config, auth) {
     this.storage = storage;
     this.config = config.current;
     this.popup = popup;
+    this.iframe = iframe;
     this.http = http;
     this.auth = auth;
     this.defaults = {
@@ -32,7 +34,7 @@ export let OAuth2 = (_dec = inject(Storage, Popup, HttpClient, BaseConfig, Authe
     };
   }
 
-  open(options, userData) {
+  open(options, userData, iframeRef) {
     let current = extend({}, this.defaults, options);
 
     let stateName = current.name + '_state';
@@ -54,7 +56,9 @@ export let OAuth2 = (_dec = inject(Storage, Popup, HttpClient, BaseConfig, Authe
     let url = current.authorizationEndpoint + '?' + this.buildQueryString(current);
 
     let openPopup;
-    if (this.config.platform === 'mobile') {
+    if (options.display === 'iframe') {
+      openPopup = this.iframe.open(url, iframeRef).eventListener(current.redirectUri);
+    } else if (this.config.platform === 'mobile') {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).eventListener(current.redirectUri);
     } else {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).pollPopup();
@@ -109,6 +113,10 @@ export let OAuth2 = (_dec = inject(Storage, Popup, HttpClient, BaseConfig, Authe
 
     return this.http.fetch(exchangeForTokenUrl, {
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: json(data),
       credentials: credentials
     }).then(status);

@@ -2,16 +2,18 @@ import {inject} from 'aurelia-dependency-injection';
 import {extend, forEach, isFunction, isString, joinUrl, camelCase, status} from './auth-utilities';
 import {Storage} from './storage';
 import {Popup} from './popup';
+import {Iframe} from './iframe';
 import {BaseConfig} from './base-config';
 import {Authentication} from './authentication';
 import {HttpClient, json} from 'aurelia-fetch-client';
 
-@inject(Storage, Popup, HttpClient, BaseConfig, Authentication)
+@inject(Storage, Popup, Iframe, HttpClient, BaseConfig, Authentication)
 export class OAuth2 {
-  constructor(storage, popup, http, config, auth) {
+  constructor(storage, popup, iframe, http, config, auth) {
     this.storage = storage;
     this.config = config.current;
     this.popup = popup;
+    this.iframe = iframe;
     this.http = http;
     this.auth = auth;
     this.defaults = {
@@ -31,7 +33,7 @@ export class OAuth2 {
     };
   }
 
-  open(options, userData) {
+  open(options, userData, iframeRef) {
     let current = extend({}, this.defaults, options);
 
     //state handling
@@ -55,7 +57,9 @@ export class OAuth2 {
     let url = current.authorizationEndpoint + '?' + this.buildQueryString(current);
 
     let openPopup;
-    if (this.config.platform === 'mobile') {
+    if (options.display === 'iframe') {
+      openPopup = this.iframe.open(url, iframeRef).eventListener(current.redirectUri);
+    } else if (this.config.platform === 'mobile') {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).eventListener(current.redirectUri);
     } else {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).pollPopup();

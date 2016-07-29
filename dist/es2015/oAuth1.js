@@ -50,6 +50,10 @@ export let OAuth1 = (_dec = inject(Storage, Popup, HttpClient, BaseConfig), _dec
 
     return this.http.fetch(exchangeForTokenUrl, {
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: json(data),
       credentials: credentials
     }).then(status);

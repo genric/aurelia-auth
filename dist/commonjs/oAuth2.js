@@ -15,6 +15,8 @@ var _storage = require('./storage');
 
 var _popup = require('./popup');
 
+var _iframe = require('./iframe');
+
 var _baseConfig = require('./base-config');
 
 var _authentication = require('./authentication');
@@ -23,13 +25,14 @@ var _aureliaFetchClient = require('aurelia-fetch-client');
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var OAuth2 = exports.OAuth2 = (_dec = (0, _aureliaDependencyInjection.inject)(_storage.Storage, _popup.Popup, _aureliaFetchClient.HttpClient, _baseConfig.BaseConfig, _authentication.Authentication), _dec(_class = function () {
-  function OAuth2(storage, popup, http, config, auth) {
+var OAuth2 = exports.OAuth2 = (_dec = (0, _aureliaDependencyInjection.inject)(_storage.Storage, _popup.Popup, _iframe.Iframe, _aureliaFetchClient.HttpClient, _baseConfig.BaseConfig, _authentication.Authentication), _dec(_class = function () {
+  function OAuth2(storage, popup, iframe, http, config, auth) {
     _classCallCheck(this, OAuth2);
 
     this.storage = storage;
     this.config = config.current;
     this.popup = popup;
+    this.iframe = iframe;
     this.http = http;
     this.auth = auth;
     this.defaults = {
@@ -49,7 +52,7 @@ var OAuth2 = exports.OAuth2 = (_dec = (0, _aureliaDependencyInjection.inject)(_s
     };
   }
 
-  OAuth2.prototype.open = function open(options, userData) {
+  OAuth2.prototype.open = function open(options, userData, iframeRef) {
     var _this = this;
 
     var current = (0, _authUtilities.extend)({}, this.defaults, options);
@@ -73,7 +76,9 @@ var OAuth2 = exports.OAuth2 = (_dec = (0, _aureliaDependencyInjection.inject)(_s
     var url = current.authorizationEndpoint + '?' + this.buildQueryString(current);
 
     var openPopup = void 0;
-    if (this.config.platform === 'mobile') {
+    if (options.display === 'iframe') {
+      openPopup = this.iframe.open(url, iframeRef).eventListener(current.redirectUri);
+    } else if (this.config.platform === 'mobile') {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).eventListener(current.redirectUri);
     } else {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).pollPopup();
@@ -130,6 +135,10 @@ var OAuth2 = exports.OAuth2 = (_dec = (0, _aureliaDependencyInjection.inject)(_s
 
     return this.http.fetch(exchangeForTokenUrl, {
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: (0, _aureliaFetchClient.json)(data),
       credentials: credentials
     }).then(_authUtilities.status);

@@ -32,12 +32,7 @@ System.register(['aurelia-dependency-injection', 'aurelia-fetch-client', './auth
           var _this = this;
 
           this.httpClient.configure(function (httpConfig) {
-            httpConfig.withDefaults({
-              headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-              }
-            }).withInterceptor(_this.auth.tokenInterceptor);
+            httpConfig.withInterceptor(_this.auth.tokenInterceptor);
           });
         };
 

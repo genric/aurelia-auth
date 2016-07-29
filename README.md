@@ -1,3 +1,6 @@
+## Auth in iframe
+
+Customization: authenticate in the iframe.
 
 
 #### Sample app: [aurelia-auth.opinionatedapps.com](http://aureliauth.opinionatedapps.com)

@@ -12,12 +12,7 @@ export let FetchConfig = (_dec = inject(HttpClient, Authentication), _dec(_class
 
   configure() {
     this.httpClient.configure(httpConfig => {
-      httpConfig.withDefaults({
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }).withInterceptor(this.auth.tokenInterceptor);
+      httpConfig.withInterceptor(this.auth.tokenInterceptor);
     });
   }
 }) || _class);

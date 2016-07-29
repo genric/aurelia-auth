@@ -79,6 +79,10 @@ System.register(['aurelia-dependency-injection', './auth-utilities', './storage'
 
           return this.http.fetch(exchangeForTokenUrl, {
             method: 'post',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
             body: json(data),
             credentials: credentials
           }).then(status);

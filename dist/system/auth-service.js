@@ -85,6 +85,10 @@ System.register(['aurelia-dependency-injection', 'aurelia-fetch-client', 'aureli
 
           return this.http.fetch(signupUrl, {
             method: 'post',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
             body: json(content)
           }).then(status).then(function (response) {
             if (_this.config.loginOnSignup) {
@@ -122,15 +126,15 @@ System.register(['aurelia-dependency-injection', 'aurelia-fetch-client', 'aureli
           });
         };
 
-        AuthService.prototype.logout = function logout(redirectUri) {
+        AuthService.prototype.logout = function logout(redirectUri, clientId) {
           var _this3 = this;
 
-          return this.auth.logout(redirectUri).then(function () {
+          return this.auth.logout(redirectUri, clientId).then(function () {
             _this3.eventAggregator.publish('auth:logout');
           });
         };
 
-        AuthService.prototype.authenticate = function authenticate(name, redirect, userData) {
+        AuthService.prototype.authenticate = function authenticate(name, redirect, userData, iframeRef) {
           var _this4 = this;
 
           var provider = this.oAuth2;
@@ -138,7 +142,7 @@ System.register(['aurelia-dependency-injection', 'aurelia-fetch-client', 'aureli
             provider = this.oAuth1;
           }
 
-          return provider.open(this.config.providers[name], userData || {}).then(function (response) {
+          return provider.open(this.config.providers[name], userData || {}, iframeRef).then(function (response) {
             _this4.auth.setToken(response, redirect);
             _this4.eventAggregator.publish('auth:authenticate', response);
             return response;
@@ -158,6 +162,10 @@ System.register(['aurelia-dependency-injection', 'aurelia-fetch-client', 'aureli
           } else if (this.config.unlinkMethod === 'post') {
             return this.http.fetch(unlinkUrl, {
               method: 'post',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
               body: json(provider)
             }).then(status).then(function (response) {
               _this5.eventAggregator.publish('auth:unlink', response);

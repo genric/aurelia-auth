@@ -95,20 +95,20 @@ export class AuthService {
       });
   }
 
-  logout(redirectUri) {
-    return this.auth.logout(redirectUri)
+  logout(redirectUri, clientId) {
+    return this.auth.logout(redirectUri, clientId)
       .then(() => {
         this.eventAggregator.publish('auth:logout');
       });
   }
 
-  authenticate(name, redirect, userData) {
+  authenticate(name, redirect, userData, iframeRef) {
     let provider = this.oAuth2;
     if (this.config.providers[name].type === '1.0') {
       provider = this.oAuth1;
     }
 
-    return provider.open(this.config.providers[name], userData || {})
+    return provider.open(this.config.providers[name], userData || {}, iframeRef)
       .then((response) => {
         this.auth.setToken(response, redirect);
         this.eventAggregator.publish('auth:authenticate', response);

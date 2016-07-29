@@ -52,6 +52,10 @@ export let AuthService = (_dec = inject(HttpClient, Authentication, OAuth1, OAut
 
     return this.http.fetch(signupUrl, {
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: json(content)
     }).then(status).then(response => {
       if (this.config.loginOnSignup) {
@@ -87,19 +91,19 @@ export let AuthService = (_dec = inject(HttpClient, Authentication, OAuth1, OAut
     });
   }
 
-  logout(redirectUri) {
-    return this.auth.logout(redirectUri).then(() => {
+  logout(redirectUri, clientId) {
+    return this.auth.logout(redirectUri, clientId).then(() => {
       this.eventAggregator.publish('auth:logout');
     });
   }
 
-  authenticate(name, redirect, userData) {
+  authenticate(name, redirect, userData, iframeRef) {
     let provider = this.oAuth2;
     if (this.config.providers[name].type === '1.0') {
       provider = this.oAuth1;
     }
 
-    return provider.open(this.config.providers[name], userData || {}).then(response => {
+    return provider.open(this.config.providers[name], userData || {}, iframeRef).then(response => {
       this.auth.setToken(response, redirect);
       this.eventAggregator.publish('auth:authenticate', response);
       return response;
@@ -117,6 +121,10 @@ export let AuthService = (_dec = inject(HttpClient, Authentication, OAuth1, OAut
     } else if (this.config.unlinkMethod === 'post') {
       return this.http.fetch(unlinkUrl, {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: json(provider)
       }).then(status).then(response => {
         this.eventAggregator.publish('auth:unlink', response);

@@ -34,6 +34,11 @@ declare module 'aurelia-auth' {
     current: any;
     constructor();
   }
+  export class Iframe {
+    constructor(config: any);
+    open(url: any, iframeRef: any): any;
+    eventListener(redirectUri: any): any;
+  }
   export class Popup {
     constructor(config: any);
     open(url: any, windowName: any, options: any, redirectUri: any): any;
@@ -62,7 +67,7 @@ declare module 'aurelia-auth' {
     setToken(response: any, redirect: any): any;
     removeToken(): any;
     isAuthenticated(): any;
-    logout(redirect: any): any;
+    logout(redirect: any, clientId: any): any;
     tokenInterceptor: any;
   }
   export class OAuth1 {
@@ -80,8 +85,8 @@ declare module 'aurelia-auth' {
     run(routingContext: any, next: any): any;
   }
   export class OAuth2 {
-    constructor(storage: any, popup: any, http: any, config: any, auth: any);
-    open(options: any, userData: any): any;
+    constructor(storage: any, popup: any, iframe: any, http: any, config: any, auth: any);
+    open(options: any, userData: any, iframeRef: any): any;
     verifyIdToken(oauthData: any, providerName: any): any;
     exchangeForToken(oauthData: any, userData: any, current: any): any;
     buildQueryString(current: any): any;
@@ -93,9 +98,9 @@ declare module 'aurelia-auth' {
     getTokenPayload(): any;
     setToken(token: any): any;
     signup(displayName: any, email: any, password: any): any;
-    login(email: any, password?: any): any;
-    logout(redirectUri: any): any;
-    authenticate(name: any, redirect: any, userData: any): any;
+    login(email: any, password: any): any;
+    logout(redirectUri: any, clientId: any): any;
+    authenticate(name: any, redirect: any, userData: any, iframeRef: any): any;
     unlink(provider: any): any;
   }
 }

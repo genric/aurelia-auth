@@ -162,13 +162,15 @@ System.register(['aurelia-dependency-injection', './base-config', './storage', '
           return true;
         };
 
-        Authentication.prototype.logout = function logout(redirect) {
+        Authentication.prototype.logout = function logout(redirect, clientId) {
           var _this = this;
 
           return new Promise(function (resolve) {
             _this.storage.remove(_this.tokenName);
 
-            if (_this.config.logoutRedirect && !redirect) {
+            if (window !== window.top) {
+              window.top.postMessage({ eventName: 'oidc.logout', data: { clientId: clientId } }, '*');
+            } else if (_this.config.logoutRedirect && !redirect) {
               window.location.href = _this.config.logoutRedirect;
             } else if (isString(redirect)) {
               window.location.href = redirect;

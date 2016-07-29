@@ -26,12 +26,7 @@ define(['exports', 'aurelia-dependency-injection', 'aurelia-fetch-client', './au
       var _this = this;
 
       this.httpClient.configure(function (httpConfig) {
-        httpConfig.withDefaults({
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        }).withInterceptor(_this.auth.tokenInterceptor);
+        httpConfig.withInterceptor(_this.auth.tokenInterceptor);
       });
     };
 

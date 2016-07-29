@@ -1,9 +1,9 @@
 'use strict';
 
-System.register(['aurelia-dependency-injection', './auth-utilities', './storage', './popup', './base-config', './authentication', 'aurelia-fetch-client'], function (_export, _context) {
+System.register(['aurelia-dependency-injection', './auth-utilities', './storage', './popup', './iframe', './base-config', './authentication', 'aurelia-fetch-client'], function (_export, _context) {
   "use strict";
 
-  var inject, extend, forEach, isFunction, isString, joinUrl, camelCase, status, Storage, Popup, BaseConfig, Authentication, HttpClient, json, _dec, _class, OAuth2;
+  var inject, extend, forEach, isFunction, isString, joinUrl, camelCase, status, Storage, Popup, Iframe, BaseConfig, Authentication, HttpClient, json, _dec, _class, OAuth2;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -26,6 +26,8 @@ System.register(['aurelia-dependency-injection', './auth-utilities', './storage'
       Storage = _storage.Storage;
     }, function (_popup) {
       Popup = _popup.Popup;
+    }, function (_iframe) {
+      Iframe = _iframe.Iframe;
     }, function (_baseConfig) {
       BaseConfig = _baseConfig.BaseConfig;
     }, function (_authentication) {
@@ -35,13 +37,14 @@ System.register(['aurelia-dependency-injection', './auth-utilities', './storage'
       json = _aureliaFetchClient.json;
     }],
     execute: function () {
-      _export('OAuth2', OAuth2 = (_dec = inject(Storage, Popup, HttpClient, BaseConfig, Authentication), _dec(_class = function () {
-        function OAuth2(storage, popup, http, config, auth) {
+      _export('OAuth2', OAuth2 = (_dec = inject(Storage, Popup, Iframe, HttpClient, BaseConfig, Authentication), _dec(_class = function () {
+        function OAuth2(storage, popup, iframe, http, config, auth) {
           _classCallCheck(this, OAuth2);
 
           this.storage = storage;
           this.config = config.current;
           this.popup = popup;
+          this.iframe = iframe;
           this.http = http;
           this.auth = auth;
           this.defaults = {
@@ -61,7 +64,7 @@ System.register(['aurelia-dependency-injection', './auth-utilities', './storage'
           };
         }
 
-        OAuth2.prototype.open = function open(options, userData) {
+        OAuth2.prototype.open = function open(options, userData, iframeRef) {
           var _this = this;
 
           var current = extend({}, this.defaults, options);
@@ -85,7 +88,9 @@ System.register(['aurelia-dependency-injection', './auth-utilities', './storage'
           var url = current.authorizationEndpoint + '?' + this.buildQueryString(current);
 
           var openPopup = void 0;
-          if (this.config.platform === 'mobile') {
+          if (options.display === 'iframe') {
+            openPopup = this.iframe.open(url, iframeRef).eventListener(current.redirectUri);
+          } else if (this.config.platform === 'mobile') {
             openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).eventListener(current.redirectUri);
           } else {
             openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).pollPopup();
@@ -142,6 +147,10 @@ System.register(['aurelia-dependency-injection', './auth-utilities', './storage'
 
           return this.http.fetch(exchangeForTokenUrl, {
             method: 'post',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
             body: json(data),
             credentials: credentials
           }).then(status);

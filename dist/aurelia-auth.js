@@ -360,6 +360,60 @@ export class BaseConfig {
 }
 
 @inject(BaseConfig)
+export class Iframe {
+  constructor(config) {
+    this.config = config.current;
+    this.iframe = null;
+    this.polling = null;
+    this.url = '';
+  }
+
+  open(url, iframeRef) {
+    this.url = url;
+    if (iframeRef) {
+      this.iframe = iframeRef;
+      this.iframe.setAttribute('src', url);
+    } else {
+      this.iframe = document.createElement('iframe');
+      this.iframe.setAttribute('height', '1px');
+      this.iframe.setAttribute('width',  '1px');
+      this.iframe.setAttribute('src', url);
+      document.body.appendChild(this.iframe);
+    }
+
+    return this;
+  }
+
+  eventListener(redirectUri) {
+    let promise = new Promise((resolve, reject) => {
+      this.iframe.addEventListener('load', () => {
+        try {
+          let documentHost = document.location.host;
+          let iframeUrl = this.iframe.contentWindow.location;
+          let iframeHost = iframeUrl.host;
+
+          if (iframeHost === documentHost && (iframeUrl.search || iframeUrl.hash)) {
+            let queryParams = iframeUrl.search.substring(1).replace(/\/$/, '');
+            let hashParams  = iframeUrl.hash.substring(1).replace(/[\/$]/, '');
+            let hash = parseQueryString(hashParams);
+            let qs = parseQueryString(queryParams);
+
+            extend(qs, hash);
+
+            if (qs.error) {
+              reject({ error: qs.error });
+            } else {
+              resolve(qs);
+            }
+          }
+        } catch (error) {}
+      });
+    });
+    return promise;
+  }
+}
+
+@inject(BaseConfig)
 export class Popup {
   constructor(config) {
     this.config = config.current;
@@ -644,11 +698,13 @@ export class Authentication {
     return true;
   }
 
-  logout(redirect) {
+  logout(redirect, clientId) {
     return new Promise(resolve => {
       this.storage.remove(this.tokenName);
 
-      if (this.config.logoutRedirect && !redirect) {
+      if (window !== window.top) { // if app is in the Iframe send logout to the main window
+        window.top.postMessage({eventName: 'oidc.logout', data: { clientId }}, '*');
+      } else if (this.config.logoutRedirect && !redirect) {
         window.location.href = this.config.logoutRedirect;
       } else if (isString(redirect)) {
         window.location.href = redirect;
@@ -738,6 +794,10 @@ export class OAuth1 {
 
     return this.http.fetch(exchangeForTokenUrl, {
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: json(data),
       credentials: credentials
     }).then(status);
@@ -760,12 +820,6 @@ export class FetchConfig {
   configure() {
     this.httpClient.configure(httpConfig => {
       httpConfig
-        .withDefaults({
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        })
         .withInterceptor(this.auth.tokenInterceptor);
     });
   }
@@ -794,12 +848,13 @@ export class AuthorizeStep {
   }
 }
 
-@inject(Storage, Popup, HttpClient, BaseConfig, Authentication)
+@inject(Storage, Popup, Iframe, HttpClient, BaseConfig, Authentication)
 export class OAuth2 {
-  constructor(storage, popup, http, config, auth) {
+  constructor(storage, popup, iframe, http, config, auth) {
     this.storage = storage;
     this.config = config.current;
     this.popup = popup;
+    this.iframe = iframe;
     this.http = http;
     this.auth = auth;
     this.defaults = {
@@ -819,7 +874,7 @@ export class OAuth2 {
     };
   }
 
-  open(options, userData) {
+  open(options, userData, iframeRef) {
     let current = extend({}, this.defaults, options);
 
     //state handling
@@ -843,7 +898,9 @@ export class OAuth2 {
     let url = current.authorizationEndpoint + '?' + this.buildQueryString(current);
 
     let openPopup;
-    if (this.config.platform === 'mobile') {
+    if (options.display === 'iframe') {
+      openPopup = this.iframe.open(url, iframeRef).eventListener(current.redirectUri);
+    } else if (this.config.platform === 'mobile') {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).eventListener(current.redirectUri);
     } else {
       openPopup = this.popup.open(url, current.name, current.popupOptions, current.redirectUri).pollPopup();
@@ -899,6 +956,10 @@ export class OAuth2 {
 
     return this.http.fetch(exchangeForTokenUrl, {
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: json(data),
       credentials: credentials
     }).then(status);
@@ -984,6 +1045,10 @@ export class AuthService {
 
     return this.http.fetch(signupUrl, {
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: json(content)
     })
       .then(status)
@@ -1023,20 +1088,20 @@ export class AuthService {
       });
   }
 
-  logout(redirectUri) {
-    return this.auth.logout(redirectUri)
+  logout(redirectUri, clientId) {
+    return this.auth.logout(redirectUri, clientId)
       .then(() => {
         this.eventAggregator.publish('auth:logout');
       });
   }
 
-  authenticate(name, redirect, userData) {
+  authenticate(name, redirect, userData, iframeRef) {
     let provider = this.oAuth2;
     if (this.config.providers[name].type === '1.0') {
       provider = this.oAuth1;
     }
 
-    return provider.open(this.config.providers[name], userData || {})
+    return provider.open(this.config.providers[name], userData || {}, iframeRef)
       .then((response) => {
         this.auth.setToken(response, redirect);
         this.eventAggregator.publish('auth:authenticate', response);
@@ -1059,6 +1124,10 @@ export class AuthService {
     } else if (this.config.unlinkMethod === 'post') {
       return this.http.fetch(unlinkUrl, {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: json(provider)
       }).then(status)
       .then(response => {
