@@ -132,13 +132,11 @@ export class Authentication {
     return true;
   }
 
-  logout(redirect, clientId) {
+  logout(redirect) {
     return new Promise(resolve => {
       this.storage.remove(this.tokenName);
 
-      if (window !== window.top) { // if app is in the Iframe send logout to the main window
-        window.top.postMessage({eventName: 'oidc.logout', data: { clientId }}, '*');
-      } else if (this.config.logoutRedirect && !redirect) {
+      if (this.config.logoutRedirect && !redirect) {
         window.location.href = this.config.logoutRedirect;
       } else if (isString(redirect)) {
         window.location.href = redirect;
