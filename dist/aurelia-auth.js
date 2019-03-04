@@ -370,16 +370,8 @@ export class Iframe {
 
   open(url, iframeRef) {
     this.url = url;
-    if (iframeRef) {
-      this.iframe = iframeRef;
-      this.iframe.setAttribute('src', url);
-    } else {
-      this.iframe = document.createElement('iframe');
-      this.iframe.setAttribute('height', '1px');
-      this.iframe.setAttribute('width',  '1px');
-      this.iframe.setAttribute('src', url);
-      document.body.appendChild(this.iframe);
-    }
+    this.iframe = iframeRef;
+    this.iframe.setAttribute('src', url);
 
     return this;
   }
@@ -388,11 +380,10 @@ export class Iframe {
     let promise = new Promise((resolve, reject) => {
       this.iframe.addEventListener('load', () => {
         try {
-          let documentHost = document.location.host;
           let iframeUrl = this.iframe.contentWindow.location;
           let iframeHost = iframeUrl.host;
 
-          if (iframeHost === documentHost && (iframeUrl.search || iframeUrl.hash)) {
+          if (iframeUrl.toString().startsWith(redirectUri) && (iframeUrl.search || iframeUrl.hash)) {
             let queryParams = iframeUrl.search.substring(1).replace(/\/$/, '');
             let hashParams  = iframeUrl.hash.substring(1).replace(/[\/$]/, '');
             let hash = parseQueryString(hashParams);
@@ -698,13 +689,11 @@ export class Authentication {
     return true;
   }
 
-  logout(redirect, clientId) {
+  logout(redirect) {
     return new Promise(resolve => {
       this.storage.remove(this.tokenName);
 
-      if (window !== window.top) { // if app is in the Iframe send logout to the main window
-        window.top.postMessage({eventName: 'oidc.logout', data: { clientId }}, '*');
-      } else if (this.config.logoutRedirect && !redirect) {
+      if (this.config.logoutRedirect && !redirect) {
         window.location.href = this.config.logoutRedirect;
       } else if (isString(redirect)) {
         window.location.href = redirect;

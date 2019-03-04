@@ -123,13 +123,11 @@ export let Authentication = (_dec = inject(Storage, BaseConfig), _dec(_class = c
     return true;
   }
 
-  logout(redirect, clientId) {
+  logout(redirect) {
     return new Promise(resolve => {
       this.storage.remove(this.tokenName);
 
-      if (window !== window.top) {
-        window.top.postMessage({ eventName: 'oidc.logout', data: { clientId } }, '*');
-      } else if (this.config.logoutRedirect && !redirect) {
+      if (this.config.logoutRedirect && !redirect) {
         window.location.href = this.config.logoutRedirect;
       } else if (isString(redirect)) {
         window.location.href = redirect;

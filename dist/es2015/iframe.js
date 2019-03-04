@@ -14,16 +14,8 @@ export let Iframe = (_dec = inject(BaseConfig), _dec(_class = class Iframe {
 
   open(url, iframeRef) {
     this.url = url;
-    if (iframeRef) {
-      this.iframe = iframeRef;
-      this.iframe.setAttribute('src', url);
-    } else {
-      this.iframe = document.createElement('iframe');
-      this.iframe.setAttribute('height', '1px');
-      this.iframe.setAttribute('width', '1px');
-      this.iframe.setAttribute('src', url);
-      document.body.appendChild(this.iframe);
-    }
+    this.iframe = iframeRef;
+    this.iframe.setAttribute('src', url);
 
     return this;
   }
@@ -32,11 +24,10 @@ export let Iframe = (_dec = inject(BaseConfig), _dec(_class = class Iframe {
     let promise = new Promise((resolve, reject) => {
       this.iframe.addEventListener('load', () => {
         try {
-          let documentHost = document.location.host;
           let iframeUrl = this.iframe.contentWindow.location;
           let iframeHost = iframeUrl.host;
 
-          if (iframeHost === documentHost && (iframeUrl.search || iframeUrl.hash)) {
+          if (iframeUrl.toString().startsWith(redirectUri) && (iframeUrl.search || iframeUrl.hash)) {
             let queryParams = iframeUrl.search.substring(1).replace(/\/$/, '');
             let hashParams = iframeUrl.hash.substring(1).replace(/[\/$]/, '');
             let hash = parseQueryString(hashParams);

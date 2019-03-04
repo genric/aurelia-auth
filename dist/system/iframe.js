@@ -34,16 +34,8 @@ System.register(['./auth-utilities', './base-config', 'aurelia-dependency-inject
 
         Iframe.prototype.open = function open(url, iframeRef) {
           this.url = url;
-          if (iframeRef) {
-            this.iframe = iframeRef;
-            this.iframe.setAttribute('src', url);
-          } else {
-            this.iframe = document.createElement('iframe');
-            this.iframe.setAttribute('height', '1px');
-            this.iframe.setAttribute('width', '1px');
-            this.iframe.setAttribute('src', url);
-            document.body.appendChild(this.iframe);
-          }
+          this.iframe = iframeRef;
+          this.iframe.setAttribute('src', url);
 
           return this;
         };
@@ -54,11 +46,10 @@ System.register(['./auth-utilities', './base-config', 'aurelia-dependency-inject
           var promise = new Promise(function (resolve, reject) {
             _this.iframe.addEventListener('load', function () {
               try {
-                var documentHost = document.location.host;
                 var iframeUrl = _this.iframe.contentWindow.location;
                 var iframeHost = iframeUrl.host;
 
-                if (iframeHost === documentHost && (iframeUrl.search || iframeUrl.hash)) {
+                if (iframeUrl.toString().startsWith(redirectUri) && (iframeUrl.search || iframeUrl.hash)) {
                   var queryParams = iframeUrl.search.substring(1).replace(/\/$/, '');
                   var hashParams = iframeUrl.hash.substring(1).replace(/[\/$]/, '');
                   var hash = parseQueryString(hashParams);

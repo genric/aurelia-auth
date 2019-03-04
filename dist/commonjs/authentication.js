@@ -139,15 +139,13 @@ var Authentication = exports.Authentication = (_dec = (0, _aureliaDependencyInje
     return true;
   };
 
-  Authentication.prototype.logout = function logout(redirect, clientId) {
+  Authentication.prototype.logout = function logout(redirect) {
     var _this = this;
 
     return new Promise(function (resolve) {
       _this.storage.remove(_this.tokenName);
 
-      if (window !== window.top) {
-        window.top.postMessage({ eventName: 'oidc.logout', data: { clientId: clientId } }, '*');
-      } else if (_this.config.logoutRedirect && !redirect) {
+      if (_this.config.logoutRedirect && !redirect) {
         window.location.href = _this.config.logoutRedirect;
       } else if ((0, _authUtilities.isString)(redirect)) {
         window.location.href = redirect;

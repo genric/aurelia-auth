@@ -67,7 +67,7 @@ declare module 'aurelia-auth' {
     setToken(response: any, redirect: any): any;
     removeToken(): any;
     isAuthenticated(): any;
-    logout(redirect: any, clientId: any): any;
+    logout(redirect: any): any;
     tokenInterceptor: any;
   }
   export class OAuth1 {
